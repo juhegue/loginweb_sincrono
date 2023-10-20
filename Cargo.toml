@@ -1,0 +1,17 @@
+[package]
+name = "loginweb"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+fernet = "0.2.1"
+base64 = "0.21.4"
+webbrowser = "0.8.12"
+reqwest = "0.11.22"
+tokio = { version = "1.33.0", features = ["full"] }
+
+
+[build-dependencies]
+winres = "0.1"
