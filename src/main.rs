@@ -1,6 +1,7 @@
 use std::env;
 extern crate fernet;
 use base64::{Engine as _, engine::{ general_purpose}};
+use isahc::prelude::*;
 use webbrowser;
 
 fn encripta(dato: &[u8]) -> String{
@@ -13,48 +14,36 @@ fn encripta(dato: &[u8]) -> String{
     return dato_encriptado;
 }
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let diagram_url = "http://localhost:8000/cambio_version/login/?param=";
+fn main() {
+    let url = "http://localhost:8000";
 
     let args: Vec<String> = env::args().collect();
     match args.len() {
         1 => {
-            return Ok(());
+
         },
         _ => {
-            let query = &args[1];
-            let query_bytes = query.as_bytes();
-
-            let check = "check".to_string() + query;
-            let check_bytes = check.as_bytes();
-
-            let mut encriptado = encripta(check_bytes);
-            let mut url = diagram_url.to_string() + &encriptado;
-
-            let resp = reqwest::get(url)
-                .await?
-                .text()
-                .await?;
-
-            let cuantos: Result<i32, std::num::ParseIntError> = resp.parse();
-
-            match cuantos {
-                Ok(valor) => {
-                    if valor > 0 {
-                        encriptado = encripta(query_bytes);
-                        url = diagram_url.to_string() + &encriptado;
-                        if webbrowser::open(&url).is_ok() {
-                            println!("{}", valor);
-                            //println!("{:#?}", resp);
-                        }
+            let param = &args[1];
+            let param_bytes = param.as_bytes();
+            let encriptado = encripta(param_bytes);
+            let full_url = format!("{}/version/login/?param={}", url, encriptado);
+            
+            if param.len() > 20 {            
+                if &param[18..23] == "versi" {
+                    if webbrowser::open(&full_url).is_ok() {
+                        println!("{}", 0);
+                    }
+                } else {
+                    let mut response = isahc::get(full_url).expect("ERROR get");
+                    if response.status().is_success() {
+                        let body = response.text().expect("ERROR body");
+                        println!("{}", body);
+                    } else {
+                        println!("ERROR status: {}", response.status());
                     }
                 }
-                Err(_) => {
-                    // println!("No se pudo realizar la conversión a entero.");
-                }
-            }
+             }
         }
     }
-    Ok(())
+
 }
